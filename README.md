@@ -2,5 +2,6 @@
 In this repository I download my code for games. 
 
 
-#SNAKE
+# SNAKE
+
 It's my first game, which I have ever created. I wrote it with help GLUT.
