@@ -1,58 +1,43 @@
-#include "platformer.h"
+#include "Mario/platformer.h"
 
 
 
 int main()
 {
- /*Start block for downloading maps of the game*/
-
-    char name_of_file[MAX_FILE_NAME] = { 0 };
-	char source[MAX_FILE_NAME] = "maps/";
-	char* res = nullptr;
-
-	size_t byte_file_size = 0, num_of_str = 0;
 	Strings* buffer_of_strs = nullptr;
-
-	int check_input = Input("%s", name_of_file);
-
-	if (check_input == NULL)
-	{
-		printf("Error with reading name of file.\n");
-		return 0;
-	}
-
-	strcat(source, name_of_file);
-
-	char* text_buffer = Create_Buffer(source, &byte_file_size);
-
-	if (text_buffer == NULL)
-	{
-		printf("Error with creating buffer\n");
-		return 0;
-	}
-
-	buffer_of_strs = Create_Ptr_Buf(text_buffer, byte_file_size, &num_of_str, '\n');
-	assert(buffer_of_strs != NULL);
-
-	/*End of maps block*/
-
-
-	/***********************************************************************/
-
-
-	/*Start block for working with SFML*/
+	size_t num_of_str = 0;
 
 	RenderWindow window(VideoMode(WIDTH_OF_SCREEN, HEIGHT_OF_SCREEN), "TRY_TO_CREATE_MARIO");
 
-	//Menu(window);
+	Res_of_menu_t res = Menu(window);
+
+	if (res.res == EXIT)
+		return 0;
+
+	else if (res.res == START_NEW_GAME)
+	{
+		buffer_of_strs = Start_game(&num_of_str, "map1.txt");
+	}
+	else if (res.res == SELECT_MAP)
+	{
+		buffer_of_strs = Start_game(&num_of_str, res.name_of_file);
+	}
+
+
+
+	/*Start block for working with SFML*/
 
 	Texture TileSet;
 	TileSet.loadFromFile("images/Mario_Tileset.png");
 
 	Player plr(TileSet);
-	Enemy enemy;
-
-	enemy.Set(TileSet, 48 * 16, 13 * 16);
+	//Enemy enemy(TileSet, 48 * 16, 13 * 16);
+	//Enemy enemy_1(TileSet, 68 * 16, 13 * 16);
+	Enemy enemy[NUM_OF_ENEMY] =
+	{
+		Enemy(TileSet, 48 * 16, 13 * 16),
+		Enemy(TileSet, 68 * 16, 13 * 16)
+	};
 
 	Sprite tile(TileSet);
 
@@ -62,7 +47,7 @@ int main()
 
 	Music music;
 	music.openFromFile("sounds/Mario_Theme.ogg");
-	music.play();
+	//music.play();
 
 	Clock clock;
 
@@ -73,7 +58,8 @@ int main()
 
 		time = time / 500; 
 
-		if (time > 20) time = 20;
+		if (time > 20)
+			time = 20;
 
 		Event event;
 		while (window.pollEvent(event))
@@ -82,20 +68,37 @@ int main()
 				window.close();
 		}
 
-		plr.Mykeyboard(sound);
+		Mykeyboard(sound, plr);
 
 		plr.Update(time, buffer_of_strs);
-		enemy.Update(time, plr, buffer_of_strs);
 
-		Intersection(enemy, plr);
+		for (size_t i = 0; i < NUM_OF_ENEMY; ++i)
+		{
+			enemy[i].Update(time, plr, buffer_of_strs);
+		}
+
+		//enemy.Update(time, plr, buffer_of_strs);
+		//enemy_1.Update(time, plr, buffer_of_strs);
+
+
+		for (size_t i = 0; i < NUM_OF_ENEMY; ++i)
+			Intersection(enemy[i], plr);
+	
+		//Intersection(enemy, plr);
+		//Intersection(enemy_1, plr);
 
 		plr.Map_scrolling();
 
 		window.clear(Color(107, 140, 255));
-		plr.Draw_map(window, tile, num_of_str, buffer_of_strs);
+		Draw_map(window, tile, num_of_str, buffer_of_strs, plr);
 
 		window.draw(plr.sprite);
-		window.draw(enemy.sprite);
+
+		for (size_t i = 0; i < NUM_OF_ENEMY; ++i)
+			window.draw(enemy[i].sprite);
+	
+		//window.draw(enemy.sprite);
+		//window.draw(enemy_1.sprite);
 
 		window.display();
 	}
